@@ -190,7 +190,7 @@ class PluginCreditTicket extends CommonDBTM
         return $tot;
     }
 
-    private static function canUpdateCreditsForTicket(Ticket $ticket): bool
+    public static function canUpdateCreditsForTicket(Ticket $ticket): bool
     {
         if (Session::haveRight(Entity::$rightname, UPDATE)) {
             return true;
@@ -200,7 +200,7 @@ class PluginCreditTicket extends CommonDBTM
             && !in_array($ticket->fields['status'], array_merge(Ticket::getSolvedStatusArray(), Ticket::getClosedStatusArray()));
     }
 
-    private static function checkInput(array $input, ?self $current_credit = null, bool $skip_status_check = false): array|false
+    private static function checkInput(array $input, ?self $current_credit = null): array|false
     {
         $ticket_id = filter_var(
             $input['tickets_id'] ?? null,
@@ -245,13 +245,9 @@ class PluginCreditTicket extends CommonDBTM
         }
 
         $ticket = new Ticket();
-        if (
-            !$ticket->getFromDB($ticket_id)
-            || !$ticket->can($ticket_id, READ)
-            || (!$skip_status_check && !self::canUpdateCreditsForTicket($ticket))
-        ) {
+        if (!$ticket->getFromDB($ticket_id)) {
             Session::addMessageAfterRedirect(
-                __s('You do not have rights to update credit vouchers for this ticket.', 'credit'),
+                __s('Ticket is mandatory.', 'credit'),
                 true,
                 ERROR,
             );
@@ -325,10 +321,7 @@ class PluginCreditTicket extends CommonDBTM
 
     public function prepareInputForAdd($input)
     {
-        $skip_status_check = (bool) ($input['_skip_status_check'] ?? false);
-        unset($input['_skip_status_check']);
-
-        $validated_input = self::checkInput($input, null, $skip_status_check);
+        $validated_input = self::checkInput($input);
         if ($validated_input === false) {
             return false;
         }
@@ -681,7 +674,6 @@ class PluginCreditTicket extends CommonDBTM
             'plugin_credit_entities_id' => $item->input['plugin_credit_entities_id'] ?? null,
             'consumed'                  => $item->input['plugin_credit_quantity'] ?? null,
             'users_id'                  => Session::getLoginUserID(),
-            '_skip_status_check'        => true,
         ];
         $credit_ticket = new self();
         if ($credit_ticket->add($input)) {

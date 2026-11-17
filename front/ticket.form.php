@@ -29,13 +29,22 @@
  * -------------------------------------------------------------------------
  */
 
-use Glpi\Exception\Http\BadRequestHttpException;
+use Glpi\Exception\Http\AccessDeniedHttpException;
 
 Session::checkRight(Ticket::$rightname, UPDATE);
 Session::checkRightsOr(PluginCreditTicketConfig::$rightname, [PluginCreditTicketConfig::TICKET_TAB, PluginCreditTicketConfig::TICKET_TAB]);
 
 $PluginCreditTicket = new PluginCreditTicket();
 if (isset($_POST["add"])) {
+    $ticket = new Ticket();
+    if (
+        !$ticket->getFromDB((int) ($_POST['tickets_id'] ?? 0))
+        || !$ticket->can($ticket->getID(), READ)
+        || !PluginCreditTicket::canUpdateCreditsForTicket($ticket)
+    ) {
+        throw new AccessDeniedHttpException();
+    }
+
     $input = [
         'tickets_id'                => $_POST['tickets_id'] ?? null,
         'plugin_credit_entities_id' => $_POST['plugin_credit_entities_id'] ?? null,
@@ -52,5 +61,3 @@ if (isset($_POST["add"])) {
     }
 }
 Html::back();
-
-throw new BadRequestHttpException();
