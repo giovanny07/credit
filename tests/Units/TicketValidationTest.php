@@ -140,8 +140,8 @@ final class TicketValidationTest extends DbTestCase
             'consumed'                  => 1,
             'users_id'                  => Session::getLoginUserID(),
         ]));
+        // Identical session messages are deduplicated.
         $this->hasSessionMessages(ERROR, [
-            'Selected credit voucher is not available for this ticket.',
             'Selected credit voucher is not available for this ticket.',
         ]);
     }
