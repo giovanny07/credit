@@ -140,6 +140,10 @@ final class TicketValidationTest extends DbTestCase
             'consumed'                  => 1,
             'users_id'                  => Session::getLoginUserID(),
         ]));
+        $this->hasSessionMessages(ERROR, [
+            'Selected credit voucher is not available for this ticket.',
+            'Selected credit voucher is not available for this ticket.',
+        ]);
     }
 
     public function testPrepareInputForAddAllowsOverconsumptionWhenAllowed(): void
